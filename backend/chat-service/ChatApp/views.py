@@ -13,7 +13,8 @@ class UserRoomsView(APIView):
 
     def get(self, request):
         user_id = request.user.id
-        rooms = Room.objects.filter(participants__user_id=user_id)
+        # rooms = Room.objects.filter(participants__user_id=user_id) narazie
+        rooms = Room.objects.all()
         serializer = RoomSerializer(rooms, many=True)
         return Response(serializer.data)
 
@@ -31,16 +32,16 @@ class RoomMessagesView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, room_id):
-        if not RoomParticipant.objects.filter(room_id=room_id, user_id=request.user.id).exists():
-            return Response({"error": "NO ACCESS"}, status=status.HTTP_403_FORBIDDEN)
+       # if not RoomParticipant.objects.filter(room_id=room_id, user_id=request.user.id).exists():
+       #     return Response({"error": "NO ACCESS"}, status=status.HTTP_403_FORBIDDEN)
 
         messages = Message.objects.filter(room_id=room_id)
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
 
     def post(self, request, room_id):
-        if not RoomParticipant.objects.filter(room_id=room_id, user_id=request.user.id).exists():
-            return Response({"error": "NO ACCESS"}, status=status.HTTP_403_FORBIDDEN)
+        #if not RoomParticipant.objects.filter(room_id=room_id, user_id=request.user.id).exists():
+        #    return Response({"error": "NO ACCESS"}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = MessageSerializer(data=request.data)
         if serializer.is_valid():
@@ -58,10 +59,21 @@ class MessageFileDownloadView(APIView):
         except Message.DoesNotExist:
             raise Http404
 
-        if not RoomParticipant.objects.filter(room_id=message.room_id, user_id=request.user.id).exists():
-            return Response({"error": "NO ACCESS"}, status=status.HTTP_403_FORBIDDEN)
+        # if not RoomParticipant.objects.filter(room_id=message.room_id, user_id=request.user.id).exists():
+        #     return Response({"error": "NO ACCESS"}, status=status.HTTP_403_FORBIDDEN)
 
         if not message.file:
             return Response({"error": "No file found"}, status=status.HTTP_404_NOT_FOUND)
 
-        return FileResponse(message.file.open('rb'), as_attachment=True)
+        # Utwórz FileResponse z poprawnymi headerami
+        response = FileResponse(message.file.open('rb'), as_attachment=True)
+        
+        # Ustaw MIME type
+        if message.file_mime_type:
+            response['Content-Type'] = message.file_mime_type
+        
+        # Ustaw Content-Disposition z oryginalną nazwą pliku
+        filename = message.file_name or f"attachment_{message_id}"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response

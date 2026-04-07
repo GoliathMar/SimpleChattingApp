@@ -27,6 +27,8 @@ class Message(models.Model):
 
     text = models.TextField(blank=True, null=True)
     file = models.FileField(upload_to='chat_media/', blank=True, null=True)
+    file_name = models.CharField(max_length=255, blank=True, null=True)  # Original filename
+    file_mime_type = models.CharField(max_length=100, blank=True, null=True)  # MIME type (e.g. application/pdf)
 
     timestamp = models.DateTimeField(auto_now_add=True)
 

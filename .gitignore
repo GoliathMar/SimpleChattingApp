@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 .DjangoVenv/
 .env
+AGENTS.md
+README.md
+STRUCTURE.md
 
 # C extensions
 *.so
